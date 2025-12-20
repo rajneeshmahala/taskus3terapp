@@ -1,8 +1,13 @@
-# TaskFlow – 3 Tier Demo App
+cd taskflow-3tier/backend
+npm install
+npm start
+#MongoDB Connected
+#Backend running on port 5000
 
-Tech Stack:
-- React.js (Frontend)
-- Node.js + Express (Backend)
-- MongoDB (Database)
+#start Frontend (UI – Tier 1)
 
-Run backend and frontend separately.
+cd taskflow-3tier/frontend/taskflow-ui
+npm install
+npm run dev
+
+#Local: http://localhost:5173
