@@ -27,7 +27,7 @@ jobs:
       run: |
         docker build \
           -t taskflow-frontend:test \
-          ./taskflow-3tierApp/frontend/taskflow-ui
+          ./taskflow-3tierApp/frontend/Dockerfile
 
     # Optional: List Docker Images (Verification)
     - name: Verify Docker Images
