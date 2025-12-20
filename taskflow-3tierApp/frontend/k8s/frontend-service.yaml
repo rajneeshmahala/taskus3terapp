@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: taskflow-frontend-svc
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: taskflow-frontend
   ports:
     - protocol: TCP
       port: 80
       targetPort: 80
-      nodePort: 30080
+      

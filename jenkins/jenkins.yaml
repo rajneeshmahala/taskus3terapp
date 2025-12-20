@@ -14,7 +14,6 @@ spec:
   resources:
     requests:
       storage: 5Gi
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -30,6 +29,10 @@ spec:
     metadata:
       labels:
         app: jenkins
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/prometheus"
+        prometheus.io/port: "8080"
     spec:
       securityContext:
         runAsUser: 1000
@@ -106,39 +109,18 @@ data:
     blueocean:1.25.3
     job-dsl:1.77
     configuration-as-code:1.55
+    prometheus:2.0.11
   casc.yaml: |
     jenkins:
-      systemMessage: "Jenkins configured automatically by Jenkins Configuration as Code plugin\n\n"
-      globalNodeProperties:
-      - envVars:
-          env:
-          - key: "MY_ENV_VAR"
-            value: "production"
-      securityRealm:
-        local:
-          allowsSignup: false
-          users:
-          - id: admin
-            password: "${ADMIN_PASSWORD}"
-      authorizationStrategy:
-        globalMatrix:
-          permissions:
-          - "Overall/Administer:admin"
-          - "Overall/Read:authenticated"
-      remotingSecurity:
-        enabled: true
-      agentProtocols:
-      - "JNLP4-connect"
-      - "Ping"
-      clouds:
-      - kubernetes:
-          name: "kubernetes"
-          serverUrl: "https://kubernetes.default"
-          skipTlsVerify: true
-          namespace: "jenkins-ns"
-          jenkinsUrl: "http://jenkins-service.jenkins-ns.svc.cluster.local:8080"
-          credentialsId: "kubeconfig"
-          containerCap: 10
+      systemMessage: "Jenkins configured automatically by JCasC"
+
+    unclassified:
+      prometheusConfiguration:
+        collectDiskUsage: true
+        collectNodeStatus: true
+        collectQueueMetrics: true
+        collectJobMetrics: true
+        path: /prometheus
 ---
 apiVersion: v1
 kind: Secret
@@ -147,7 +129,7 @@ metadata:
   namespace: jenkins-ns
 type: Opaque
 data:
-  admin-password: YWRtaW4=  # base64 encoded 'admin', change this
+  admin-password: YWRtaW4=   # base64(admin)
 ---
 apiVersion: batch/v1
 kind: Job
@@ -157,14 +139,18 @@ metadata:
 spec:
   template:
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
       - name: init
         image: jenkins/jenkins:lts
         command: ["/bin/sh", "-c"]
         args:
         - |
-          cp /usr/share/jenkins/ref/plugins.txt /var/jenkins_home/plugins.txt &&
-          /usr/local/bin/install-plugins.sh < /var/jenkins_home/plugins.txt &&
+          cp /usr/share/jenkins/ref/plugins.txt /var/jenkins_home/plugins.txt && \
+          /usr/local/bin/install-plugins.sh < /var/jenkins_home/plugins.txt && \
           cp /usr/share/jenkins/ref/casc.yaml /var/jenkins_home/casc.yaml
         volumeMounts:
         - name: jenkins-home
