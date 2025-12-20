@@ -4,7 +4,7 @@ metadata:
   name: odoo
   namespace: odoo
 spec:
-  type: loadBalancer
+  type: LoadBalancer
   selector:
     app: odoo
   ports:
