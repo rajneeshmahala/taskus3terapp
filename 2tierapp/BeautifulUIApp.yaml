@@ -1,34 +1,50 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: todo-ui
+  name: wordpress
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: todo-ui
+      app: wordpress
   template:
     metadata:
       labels:
-        app: todo-ui
+        app: wordpress
     spec:
       containers:
-      - name: todo-ui
-        image: ghcr.io/somerepo/react-todo-ui:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: DB_URL
-          value: mongodb://mongo:27017/todos
+        - name: wordpress
+          image: wordpress:6.5-apache
+          ports:
+            - containerPort: 80
+          env:
+            - name: WORDPRESS_DB_HOST
+              value: mysql-service
+            - name: WORDPRESS_DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
+            - name: WORDPRESS_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
+            - name: WORDPRESS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: todo-ui
+  name: wordpress-service
 spec:
   type: LoadBalancer
   selector:
-    app: todo-ui
+    app: wordpress
   ports:
-    - port: 3000
-      targetPort: 3000
+    - port: 80
+      targetPort: 80
+      

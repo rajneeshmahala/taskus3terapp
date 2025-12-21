@@ -1,29 +1,45 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: rootpass
+  MYSQL_DATABASE: wordpress
+  MYSQL_USER: wpuser
+  MYSQL_PASSWORD: wppass
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mongo
+  name: mysql
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mongo
+      app: mysql
   template:
     metadata:
       labels:
-        app: mongo
+        app: mysql
     spec:
       containers:
-      - name: mongo
-        image: mongo:7
-        ports:
-        - containerPort: 27017
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          envFrom:
+            - secretRef:
+                name: mysql-secret
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongo
+  name: mysql-service
 spec:
+  type: ClusterIP
   selector:
-    app: mongo
+    app: mysql
   ports:
-    - port: 27017
+    - port: 3306
+      targetPort: 3306
