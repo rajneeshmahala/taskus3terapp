@@ -1,0 +1,65 @@
+trigger:
+  branches:
+    include:
+      - dev
+      - uat
+      - prod
+
+variables:
+  terraformVersion: "1.6.6"
+
+stages:
+- stage: Terraform_Deploy
+  jobs:
+  - job: Deploy
+    pool:
+      vmImage: ubuntu-latest
+
+    steps:
+    - checkout: self
+
+    - bash: |
+        if [ "$(Build.SourceBranchName)" = "dev" ]; then
+          echo "##vso[task.setvariable variable=ENV]dev"
+        elif [ "$(Build.SourceBranchName)" = "uat" ]; then
+          echo "##vso[task.setvariable variable=ENV]uat"
+        elif [ "$(Build.SourceBranchName)" = "prod" ]; then
+          echo "##vso[task.setvariable variable=ENV]prod"
+        else
+          exit 1
+        fi
+      displayName: Set Environment
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(terraformVersion)
+
+    - task: TerraformTaskV4@4
+      displayName: Terraform Init
+      inputs:
+        provider: azurerm
+        command: init
+        backendServiceArm: Azure-Service-Connection
+        backendAzureRmResourceGroupName: rg-tfstate
+        backendAzureRmStorageAccountName: tfstateaccount123
+        backendAzureRmContainerName: tfstate
+        backendAzureRmKey: $(ENV)/terraform.tfstate
+
+    - task: TerraformTaskV4@4
+      displayName: Terraform Plan
+      inputs:
+        provider: azurerm
+        command: plan
+        environmentServiceNameAzureRM: Azure-Service-Connection
+        commandOptions: >
+          -var-file=env/$(ENV).tfvars
+
+    - task: TerraformTaskV4@4
+      displayName: Terraform Apply
+      inputs:
+        provider: azurerm
+        command: apply
+        environmentServiceNameAzureRM: Azure-Service-Connection
+        commandOptions: >
+          -auto-approve
+          -var-file=env/$(ENV).tfvars
