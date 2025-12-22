@@ -13,21 +13,50 @@ spec:
       labels:
         app: odoo
     spec:
+
+      # 🔹 INIT CONTAINER (FIXED)
+      initContainers:
+      - name: init-odoo-db
+        image: odoo:17
+        env:
+        - name: DB_HOST
+          value: postgres
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: odoo
+        - name: DB_PASSWORD
+          value: odoo123
+        - name: DB_NAME
+          value: odoo
+        command:
+          - sh
+          - -c
+          - |
+            echo "Initializing Odoo DB..."
+            odoo -d odoo -i base --without-demo=all --stop-after-init || true
+
+      # 🔹 MAIN ODOO CONTAINER
       containers:
       - name: odoo
         image: odoo:17
         ports:
         - containerPort: 8069
         env:
-        - name: HOST
+        - name: DB_HOST
           value: postgres
-        - name: USER
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
           value: odoo
-        - name: PASSWORD
+        - name: DB_PASSWORD
           value: odoo123
+        - name: DB_NAME
+          value: odoo
         volumeMounts:
-        - mountPath: /var/lib/odoo
-          name: odoo-data
+        - name: odoo-data
+          mountPath: /var/lib/odoo
+
       volumes:
       - name: odoo-data
         persistentVolumeClaim:
