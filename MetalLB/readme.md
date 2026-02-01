@@ -217,7 +217,7 @@ WHAT YOU LEARNED
 	•	Real-world networking constraints
 	•	Why cloud providers give LB automatically
 
-⸻
+⸻ 
 
 NEXT LEARNING STEPS (RECOMMENDED)
 	1.	Install Ingress NGINX on MetalLB
